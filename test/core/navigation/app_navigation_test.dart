@@ -1,9 +1,24 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:movie_explorer/app/movie_explorer_app.dart';
+import 'package:movie_explorer/core/design_system/design_system.dart';
+import 'package:movie_explorer/di/injection.dart';
+
+import '../../helpers/fakes/fake_movie_repository.dart';
+import '../../helpers/fixtures.dart';
+import '../../helpers/pump_app.dart';
+import '../../helpers/test_dependencies.dart';
 
 void main() {
+  setUp(
+    () => registerTestDependencies(
+      movieRepository: FakeMovieRepository(movies: testMovies),
+    ),
+  );
+  tearDown(getIt.reset);
+
   Future<void> pumpMovieExplorer(WidgetTester tester) async {
+    tester.usePhoneSurface();
     await tester.pumpWidget(const MovieExplorerApp());
     await tester.pumpAndSettle();
   }
@@ -19,8 +34,8 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> openSampleDetails(WidgetTester tester) async {
-    await tester.tap(find.text('Open sample details'));
+  Future<void> openFirstMovie(WidgetTester tester) async {
+    await tester.tap(find.byType(MovieCard).first);
     await tester.pumpAndSettle();
   }
 
@@ -36,6 +51,13 @@ void main() {
       expect(navigationBar.destinations, hasLength(4));
       expect(navigationBar.selectedIndex, 0);
       expect(find.widgetWithText(AppBar, 'Trending'), findsOneWidget);
+    });
+
+    testWidgets('Home shows the trending movies', (tester) async {
+      await pumpMovieExplorer(tester);
+
+      expect(find.byType(MovieCard), findsNWidgets(testMovies.length));
+      expect(find.text("Nebula's Edge"), findsOneWidget);
     });
 
     testWidgets('each destination shows its own screen', (tester) async {
@@ -54,11 +76,11 @@ void main() {
       expect(find.widgetWithText(AppBar, 'Trending'), findsOneWidget);
     });
 
-    testWidgets('details are pushed inside the tab and the back button '
-        'returns to the tab root', (tester) async {
+    testWidgets('tapping a movie pushes its details inside the tab, and the '
+        'back button returns to the grid', (tester) async {
       await pumpMovieExplorer(tester);
 
-      await openSampleDetails(tester);
+      await openFirstMovie(tester);
       expect(find.text('Movie #101'), findsOneWidget);
       // The shell's tab bar stays visible above pushed screens.
       expect(find.byType(NavigationBar), findsOneWidget);
@@ -72,7 +94,7 @@ void main() {
       tester,
     ) async {
       await pumpMovieExplorer(tester);
-      await openSampleDetails(tester);
+      await openFirstMovie(tester);
 
       await tapDestination(tester, 'Search');
       // Home's stack is kept alive offstage, so it isn't visible here...
@@ -87,7 +109,7 @@ void main() {
       tester,
     ) async {
       await pumpMovieExplorer(tester);
-      await openSampleDetails(tester);
+      await openFirstMovie(tester);
 
       await tapDestination(tester, 'Home');
 

@@ -1,0 +1,122 @@
+[
+  {
+    "id": 101,
+    "title": "Nebula's Edge",
+    "overview": "A salvage crew chasing a derelict freighter at the rim of known space discovers a signal that should not exist — and a choice that will decide who makes it home.",
+    "poster_url": "https://picsum.photos/seed/nebulas-edge/300/450",
+    "backdrop_url": "https://picsum.photos/seed/nebulas-edge-bd/780/440",
+    "vote_average": 8.2,
+    "release_date": "2023-09-15",
+    "genres": ["Science Fiction", "Adventure"]
+  },
+  {
+    "id": 102,
+    "title": "The Silent Harbor",
+    "overview": "When a retired lighthouse keeper takes in a stranger during a storm, old secrets from the town's past begin to surface with the tide.",
+    "poster_url": "https://picsum.photos/seed/silent-harbor/300/450",
+    "backdrop_url": "https://picsum.photos/seed/silent-harbor-bd/780/440",
+    "vote_average": 7.6,
+    "release_date": "2022-03-04",
+    "genres": ["Drama", "Thriller"]
+  },
+  {
+    "id": 103,
+    "title": "Crimson Vale",
+    "overview": "A cartographer is hired to map a valley that rewrites itself each night, guided by a village that has learned to survive its shifting borders.",
+    "poster_url": "https://picsum.photos/seed/crimson-vale/300/450",
+    "backdrop_url": "https://picsum.photos/seed/crimson-vale-bd/780/440",
+    "vote_average": 7.9,
+    "release_date": "2024-06-21",
+    "genres": ["Fantasy", "Adventure"]
+  },
+  {
+    "id": 104,
+    "title": "Paper Skies",
+    "overview": "Two pen pals who have never met plan a single day together in a city neither has visited, testing whether a friendship on paper can survive real life.",
+    "poster_url": "https://picsum.photos/seed/paper-skies/300/450",
+    "backdrop_url": "https://picsum.photos/seed/paper-skies-bd/780/440",
+    "vote_average": 7.1,
+    "release_date": "2021-11-12",
+    "genres": ["Romance", "Drama"]
+  },
+  {
+    "id": 105,
+    "title": "Iron Meridian",
+    "overview": "An engineer aboard a failing orbital station races a shrinking clock to keep a million people breathing while the people who built it try to bury the truth.",
+    "poster_url": "https://picsum.photos/seed/iron-meridian/300/450",
+    "backdrop_url": "https://picsum.photos/seed/iron-meridian-bd/780/440",
+    "vote_average": 8.5,
+    "release_date": "2023-05-19",
+    "genres": ["Action", "Science Fiction"]
+  },
+  {
+    "id": 106,
+    "title": "Whispers in the Fog",
+    "overview": "A grief counselor moves to a coastal town where the fog carries voices, and slowly realizes the townsfolk have been listening for years.",
+    "poster_url": "https://picsum.photos/seed/whispers-fog/300/450",
+    "backdrop_url": "https://picsum.photos/seed/whispers-fog-bd/780/440",
+    "vote_average": 6.8,
+    "release_date": "2020-10-30",
+    "genres": ["Mystery", "Horror"]
+  },
+  {
+    "id": 107,
+    "title": "The Last Cartographer",
+    "overview": "In a world where the final unmapped forest is about to be cleared, an aging mapmaker and a runaway child set out to record it before it disappears.",
+    "poster_url": "https://picsum.photos/seed/last-cartographer/300/450",
+    "backdrop_url": "https://picsum.photos/seed/last-cartographer-bd/780/440",
+    "vote_average": 8.0,
+    "release_date": "2024-02-09",
+    "genres": ["Adventure", "Drama"]
+  },
+  {
+    "id": 108,
+    "title": "Neon Requiem",
+    "overview": "A burned-out courier takes one last job through a rain-soaked megacity, unaware the package is the only thing standing between two warring syndicates.",
+    "poster_url": "https://picsum.photos/seed/neon-requiem/300/450",
+    "backdrop_url": "https://picsum.photos/seed/neon-requiem-bd/780/440",
+    "vote_average": 7.4,
+    "release_date": "2022-08-26",
+    "genres": ["Action", "Thriller"]
+  },
+  {
+    "id": 109,
+    "title": "Garden of Static",
+    "overview": "A sound engineer discovers a frequency that lets plants remember, and must decide what to do when the garden starts remembering her.",
+    "poster_url": "https://picsum.photos/seed/garden-static/300/450",
+    "backdrop_url": "https://picsum.photos/seed/garden-static-bd/780/440",
+    "vote_average": 7.7,
+    "release_date": "2023-04-14",
+    "genres": ["Science Fiction", "Drama"]
+  },
+  {
+    "id": 110,
+    "title": "Hollow Kings",
+    "overview": "Three estranged siblings return to their late father's crumbling estate to divide an inheritance and end up excavating the family's buried history instead.",
+    "poster_url": "https://picsum.photos/seed/hollow-kings/300/450",
+    "backdrop_url": "https://picsum.photos/seed/hollow-kings-bd/780/440",
+    "vote_average": 8.1,
+    "release_date": "2021-07-02",
+    "genres": ["Fantasy", "Drama"]
+  },
+  {
+    "id": 111,
+    "title": "Midnight Cartel",
+    "overview": "A rookie detective goes undercover in a city's late-night delivery network and finds the line between the law and the people it fails is thinner than expected.",
+    "poster_url": "https://picsum.photos/seed/midnight-cartel/300/450",
+    "backdrop_url": "https://picsum.photos/seed/midnight-cartel-bd/780/440",
+    "vote_average": 7.3,
+    "release_date": "2024-01-19",
+    "genres": ["Crime", "Thriller"]
+  },
+  {
+    "id": 112,
+    "title": "The Glass Orchard",
+    "overview": "A widowed botanist and a traveling glassblower spend one summer restoring a greenhouse, and discover that some things are stronger for having been broken.",
+    "poster_url": "https://picsum.photos/seed/glass-orchard/300/450",
+    "backdrop_url": "https://picsum.photos/seed/glass-orchard-bd/780/440",
+    "vote_average": 6.9,
+    "release_date": "2022-05-27",
+    "genres": ["Drama", "Romance"]
+  }
+]

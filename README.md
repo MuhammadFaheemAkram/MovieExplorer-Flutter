@@ -25,8 +25,8 @@ MovieExplorer is built in **strict, reviewable phases**. Each phase ends with a 
 | Phase | Scope | Status |
 |------:|-------|:------:|
 | 1 | Foundation: FVM project, design system base, typed navigation (4-tab shell), DI root | ✅ Done |
-| 2 | Models + fake API + repository + Home (trending) | ⏳ Next |
-| 3 | drift favorites + movie details | 🔜 Planned |
+| 2 | Models + fake API + repository + Home (trending) | ✅ Done |
+| 3 | drift favorites + movie details | ⏳ Next |
 | 4 | Search + settings + tests + polish | 🔜 Planned |
 
 ---
@@ -77,7 +77,7 @@ lib/
 └── di/         → composition root (get_it + injectable)
 ```
 
-**Data flow** (the target; it arrives with Phase 2+):
+**Data flow** (live for Home since Phase 2; drift joins in Phase 3):
 
 ```
 View ──intent──▶ Cubit / Bloc ──▶ UseCase ──▶ MovieRepository ──▶ FakeMovieApiService (bundled JSON)
@@ -107,20 +107,30 @@ Key rules:
 
 ```
 MovieExplorer/
-├── .fvmrc                         # pinned Flutter version (3.47.6)
-├── analysis_options.yaml          # lints + strict analyzer modes
+├── .fvmrc                              # pinned Flutter version (3.47.6)
+├── analysis_options.yaml               # lints + strict analyzer modes
+├── assets/json/trending_movies.json    # fake-API catalog (same file as the iOS edition)
 ├── lib/
-│   ├── main.dart                  # binding → configureDependencies() → runApp
+│   ├── main.dart                       # binding → configureDependencies() → runApp
 │   ├── app/movie_explorer_app.dart
 │   ├── core/
-│   │   ├── design_system/         # theme/ (AppTheme, AppColors, tokens) + widgets/ (state views)
-│   │   ├── navigation/            # app_routes.dart (+ .g.dart), app_router.dart, app_shell.dart
-│   │   ├── common/  network/  database/  storage/     # filled in Phases 2–4
-│   ├── data/{mapper,repository}/                     # Phase 2+
-│   ├── domain/{model,repository,usecase}/            # Phase 2+
-│   ├── features/{home,search,favorites,details,settings}/
-│   └── di/injection.dart (+ injection.config.dart)
-└── test/                          # mirrors lib/, plus helpers/
+│   │   ├── common/                     # Result, AppException, AppConfig
+│   │   ├── design_system/              # theme/ (AppTheme, AppColors, tokens) + widgets/
+│   │   ├── navigation/                 # app_routes.dart (+ .g.dart), app_router.dart, app_shell.dart
+│   │   ├── network/                    # MovieApiService, FakeMovieApiService, AssetJsonLoader, dto/
+│   │   ├── database/  storage/         # Phases 3–4
+│   ├── data/
+│   │   ├── mapper/                     # MovieDto → Movie
+│   │   └── repository/                 # MovieRepositoryImpl
+│   ├── domain/
+│   │   ├── model/                      # Movie (freezed)
+│   │   ├── repository/                 # MovieRepository (contract)
+│   │   └── usecase/                    # GetTrendingMovies, SearchMovies, GetMovieDetails
+│   ├── features/
+│   │   ├── home/                       # home_page.dart, home_view.dart, cubit/, widgets/
+│   │   └── search/ favorites/ details/ settings/   # placeholders until Phases 3–4
+│   └── di/                             # injection.dart (+ .config.dart), app_module.dart
+└── test/                               # mirrors lib/, plus helpers/ (fixtures, fakes, pump helpers)
 ```
 
 ---
@@ -146,6 +156,20 @@ fvm dart run build_runner build   # or: watch
 
 ---
 
+## 🌐 How the Fake API Works
+
+There is no backend. `FakeMovieApiService` implements the same `MovieApiService` contract a real client would:
+
+- It reads [`assets/json/trending_movies.json`](assets/json/trending_movies.json), the same 12-movie catalog the iOS edition bundles, through `AssetJsonLoader`.
+- It decodes the catalog into `MovieDto`s with `json_serializable`. The snake_case keys map automatically, and a malformed catalog becomes a `DataFormatException`.
+- It simulates latency: 800 ms for trending, 400 ms for search and 500 ms for details.
+- Search matches the **title or a genre**, case-insensitively. An unknown id throws `NotFoundException`.
+- Setting `AppConfig.simulateNetworkErrors = true` makes every call throw `NetworkException`, so you can walk through each screen's error state.
+
+`MovieRepositoryImpl` maps the DTOs to domain `Movie`s and turns exceptions into `Result` values (`Ok` / `Err`), so nothing above the data layer needs `try`/`catch`. Swapping in a real `dio` client means writing another `MovieApiService` and changing one DI annotation.
+
+---
+
 ## ✅ Testing
 
 ```bash
@@ -153,10 +177,14 @@ fvm flutter analyze
 fvm flutter test
 ```
 
-Phase 1 ships **15 tests**:
-- **Navigation:** tabs, Details pushed inside a tab, per-tab back stacks surviving tab switches, and re-tapping a tab to pop it.
-- **Theme:** light/dark themes and `AppColors`.
-- **Shared state widgets:** `LoadingView`, `ErrorView`, `EmptyStateView`.
+**70 tests** after Phase 2:
+- **Fake API:** runs against the real bundled JSON. Covers search by title and genre, not-found ids, simulated errors, and malformed catalogs.
+- **Data layer:** DTO decoding (snake_case, checked errors), mappers, and the repository's error mapping.
+- **Use cases:** trending, search (blank queries skip the repository), details.
+- **`HomeCubit`** (`bloc_test`): load, empty, error, and refresh keeping content, plus no emits after close.
+- **`HomeView`** (widget tests with a `MockCubit`): every state, taps, pull-to-refresh, the refresh-failure SnackBar.
+- **Navigation:** tabs, per-tab back stacks, back, re-tap to pop. Fakes are registered in `getIt` for these.
+- **Design system:** theme, `AppColors`, `MovieCard`, `RatingBadge`, `PosterImage`, the state widgets, and large-text overflow.
 
 ---
 
@@ -183,12 +211,12 @@ Phase 1 ships **15 tests**:
 ## 📚 Documentation
 
 - [Phase 1 — Foundation](docs/PHASE_1_SUMMARY.md)
+- [Phase 2 — Models + Fake API + Repository + Home](docs/PHASE_2_SUMMARY.md)
 
 ---
 
 ## 🗺️ Roadmap
 
-- **Phase 2:** `Result` + `AppException`, bundled JSON + `FakeMovieApiService`, `MovieRepository`, `HomeCubit` + the trending grid.
 - **Phase 3:** drift favorites (DAO, streams, transactions), the Details screen, live hearts everywhere.
 - **Phase 4:**
   - `SearchBloc` with debounce + restartable transformers;

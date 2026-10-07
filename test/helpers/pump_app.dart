@@ -13,4 +13,14 @@ extension PumpApp on WidgetTester {
       ),
     );
   }
+
+  /// Renders at a phone-sized 390×844 logical surface (instead of the default
+  /// 800×600 test window), so layouts behave as they do on a device. The
+  /// original size is restored when the test ends.
+  void usePhoneSurface() {
+    view
+      ..physicalSize = const Size(1170, 2532)
+      ..devicePixelRatio = 3;
+    addTearDown(view.reset);
+  }
 }

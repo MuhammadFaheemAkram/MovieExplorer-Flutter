@@ -28,6 +28,10 @@ void main() {
         Color.lerp(AppColors.light.favorite, AppColors.dark.favorite, 0.5),
       );
       expect(
+        mid.onFavorite,
+        Color.lerp(AppColors.light.onFavorite, AppColors.dark.onFavorite, 0.5),
+      );
+      expect(
         mid.ratingStar,
         Color.lerp(AppColors.light.ratingStar, AppColors.dark.ratingStar, 0.5),
       );
@@ -46,8 +50,24 @@ void main() {
       final copy = AppColors.light.copyWith(favorite: purple);
 
       expect(copy.favorite, purple);
+      expect(copy.onFavorite, AppColors.light.onFavorite);
       expect(copy.ratingStar, AppColors.light.ratingStar);
       expect(copy.badgeScrim, AppColors.light.badgeScrim);
+    });
+
+    test('"In favorites" text meets WCAG AA contrast in both themes', () {
+      // Regression: white on the dark theme's lighter red was only ~2.8:1.
+      double contrast(Color a, Color b) {
+        final (hi, lo) = (a.computeLuminance(), b.computeLuminance());
+        return hi > lo ? (hi + 0.05) / (lo + 0.05) : (lo + 0.05) / (hi + 0.05);
+      }
+
+      for (final colors in [AppColors.light, AppColors.dark]) {
+        expect(
+          contrast(colors.onFavorite, colors.favorite),
+          greaterThanOrEqualTo(4.5),
+        );
+      }
     });
   });
 }

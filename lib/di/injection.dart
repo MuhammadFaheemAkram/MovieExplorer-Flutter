@@ -14,9 +14,9 @@ final GetIt getIt = GetIt.instance;
 /// `AppEnvironment` on iOS).
 ///
 /// `injectable` generates `getIt.init()` from the annotations it finds under
-/// `lib/` (`@injectable`, `@lazySingleton`, `@module`…). It is async so that
-/// dependencies needing async setup (`@preResolve`) can join later.
+/// `lib/`. It is async because the `@preResolve` dependencies (preferences and
+/// package info) must be ready before the first frame.
 @InjectableInit()
 Future<void> configureDependencies() async {
-  getIt.init();
+  await getIt.init();
 }

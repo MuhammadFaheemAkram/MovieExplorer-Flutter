@@ -3,23 +3,32 @@ import 'package:material_ui/material_ui.dart';
 import 'package:movie_explorer/app/movie_explorer_app.dart';
 import 'package:movie_explorer/core/design_system/design_system.dart';
 import 'package:movie_explorer/di/injection.dart';
+import 'package:movie_explorer/domain/model/app_theme_mode.dart';
+import 'package:movie_explorer/domain/model/content_language.dart';
 
 import '../../helpers/fakes/fake_movie_repository.dart';
+import '../../helpers/fakes/fake_settings_repository.dart';
 import '../../helpers/fixtures.dart';
 import '../../helpers/pump_app.dart';
 import '../../helpers/test_dependencies.dart';
 
 void main() {
   late FakeMovieRepository repository;
+  late FakeSettingsRepository settings;
 
   setUp(() {
     repository = FakeMovieRepository(movies: testMovies);
-    registerTestDependencies(movieRepository: repository);
+    settings = FakeSettingsRepository();
+    registerTestDependencies(
+      movieRepository: repository,
+      settingsRepository: settings,
+    );
   });
 
   tearDown(() async {
     await getIt.reset();
     await repository.dispose();
+    await settings.dispose();
   });
 
   Future<void> pumpMovieExplorer(WidgetTester tester) async {
@@ -159,6 +168,61 @@ void main() {
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
       expect(find.byTooltip('Remove from favorites'), findsOneWidget);
+    });
+  });
+
+  group('Search tab', () {
+    testWidgets('typing finds movies, and a result opens its details inside '
+        'the Search tab', (tester) async {
+      await pumpMovieExplorer(tester);
+      await tapDestination(tester, 'Search');
+
+      await tester.enterText(find.byType(TextField), 'harbor');
+      await tester.pumpAndSettle();
+      expect(find.byType(MovieRow), findsOneWidget);
+
+      await tester.tap(find.text('The Silent Harbor'));
+      await tester.pumpAndSettle();
+      expect(find.text('Overview'), findsOneWidget);
+      final navigationBar = tester.widget<NavigationBar>(
+        find.byType(NavigationBar),
+      );
+      expect(navigationBar.selectedIndex, 1);
+    });
+  });
+
+  group('Settings (app-scoped)', () {
+    testWidgets('choosing Dark restyles the whole app', (tester) async {
+      await pumpMovieExplorer(tester);
+      await tapDestination(tester, 'Settings');
+
+      await tester.tap(find.text('Dark'));
+      await tester.pumpAndSettle();
+
+      final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+      expect(app.themeMode, ThemeMode.dark);
+      expect(settings.currentSettings.themeMode, AppThemeMode.dark);
+    });
+
+    testWidgets('a saved appearance applies from the first frame', (
+      tester,
+    ) async {
+      await settings.updateThemeMode(AppThemeMode.light);
+
+      await pumpMovieExplorer(tester);
+
+      final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+      expect(app.themeMode, ThemeMode.light);
+    });
+
+    testWidgets('the content language reaches the Home badge', (tester) async {
+      await pumpMovieExplorer(tester);
+      expect(find.text('EN'), findsOneWidget);
+
+      await settings.updateLanguage(ContentLanguage.es);
+      await tester.pumpAndSettle();
+
+      expect(find.text('ES'), findsOneWidget);
     });
   });
 }

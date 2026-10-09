@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:movie_explorer/core/design_system/design_system.dart';
@@ -34,7 +35,7 @@ class MovieDetailsView extends StatelessWidget {
   }
 }
 
-class _MovieDetailsContent extends StatelessWidget {
+class _MovieDetailsContent extends StatefulWidget {
   const _MovieDetailsContent({
     required this.movie,
     required this.onToggleFavorite,
@@ -44,15 +45,50 @@ class _MovieDetailsContent extends StatelessWidget {
   final VoidCallback onToggleFavorite;
 
   @override
+  State<_MovieDetailsContent> createState() => _MovieDetailsContentState();
+}
+
+class _MovieDetailsContentState extends State<_MovieDetailsContent> {
+  static const _expandedHeight = 220.0;
+
+  final _scrollController = ScrollController();
+
+  /// True while the backdrop image is behind the status bar. The status bar
+  /// then needs light icons; once the bar collapses onto the plain surface,
+  /// the theme default applies again.
+  bool _overImage = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final overImage =
+        _scrollController.offset < _expandedHeight - kToolbarHeight;
+    if (overImage != _overImage) setState(() => _overImage = overImage);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final movie = widget.movie;
     final theme = Theme.of(context);
     final appColors = context.appColors;
     return Scaffold(
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           SliverAppBar(
             pinned: true,
-            expandedHeight: 220,
+            expandedHeight: _expandedHeight,
+            systemOverlayStyle: _overImage ? SystemUiOverlayStyle.light : null,
             // A backdrop behind the back button keeps it readable both over
             // the image and on the collapsed bar.
             leading: Padding(
@@ -65,8 +101,22 @@ class _MovieDetailsContent extends StatelessWidget {
               ),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: PosterImage(
-                url: movie.backdropUrl ?? movie.posterUrl,
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  PosterImage(url: movie.backdropUrl ?? movie.posterUrl),
+                  // A soft top shade keeps the status bar legible on bright
+                  // images.
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.center,
+                        colors: [Color(0x99000000), Color(0x00000000)],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -88,7 +138,7 @@ class _MovieDetailsContent extends StatelessWidget {
                 const SizedBox(height: AppSpacing.medium),
                 _FavoriteToggle(
                   isFavorite: movie.isFavorite,
-                  onPressed: onToggleFavorite,
+                  onPressed: widget.onToggleFavorite,
                 ),
                 const SizedBox(height: AppSpacing.large),
                 Text('Overview', style: theme.textTheme.titleMedium),
@@ -170,7 +220,7 @@ class _FavoriteToggle extends StatelessWidget {
         onPressed: onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: context.appColors.favorite,
-          foregroundColor: Colors.white,
+          foregroundColor: context.appColors.onFavorite,
         ),
         icon: const Icon(Icons.favorite),
         label: const Text('In favorites'),

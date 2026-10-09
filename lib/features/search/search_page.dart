@@ -1,25 +1,24 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:movie_explorer/core/design_system/design_system.dart';
 import 'package:movie_explorer/core/navigation/app_routes.dart';
+import 'package:movie_explorer/di/injection.dart';
+import 'package:movie_explorer/features/search/bloc/search_bloc.dart';
+import 'package:movie_explorer/features/search/search_view.dart';
 
-/// Search tab. Phase 1 placeholder; Phase 4 adds the debounced search.
+/// Search tab entry point. It creates this screen's [SearchBloc] and wires
+/// navigation; the [SearchView] does the rendering.
 class SearchPage extends StatelessWidget {
   const SearchPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Search')),
-      body: EmptyStateView(
-        icon: Icons.search,
-        title: 'Search movies',
-        message: 'Coming in Phase 4: debounced search by title or genre.',
-        // Temporary: shows that Details is pushed inside this tab.
-        action: FilledButton.tonal(
-          onPressed: () =>
-              const SearchMovieDetailsRoute(id: 105).push<void>(context),
-          child: const Text('Open sample details'),
-        ),
+    return BlocProvider(
+      create: (_) => getIt<SearchBloc>(),
+      child: SearchView(
+        onMovieTap: (movie) => SearchMovieDetailsRoute(
+          id: movie.id,
+          $extra: movie,
+        ).push<void>(context),
       ),
     );
   }

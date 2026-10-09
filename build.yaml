@@ -6,3 +6,9 @@ targets:
           # Store DateTimes as ISO-8601 text (microsecond precision) instead of
           # whole Unix seconds, so "newest favorite first" stays exact.
           store_date_time_values_as_text: true
+      source_gen:combining_builder:
+        options:
+          # Lint headers for json_serializable / go_router_builder parts, so
+          # generated files can stay inside the analyzer's scope.
+          ignore_for_file:
+            - type=lint

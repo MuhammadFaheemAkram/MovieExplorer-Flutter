@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:movie_explorer/core/design_system/design_system.dart';
+import 'package:movie_explorer/domain/model/content_language.dart';
 import 'package:movie_explorer/domain/model/movie.dart';
 import 'package:movie_explorer/features/home/cubit/home_cubit.dart';
 import 'package:movie_explorer/features/home/cubit/home_state.dart';
@@ -41,6 +42,27 @@ void main() {
       ),
     );
   }
+
+  testWidgets('the app bar shows the content-language badge', (tester) async {
+    when(() => cubit.state).thenReturn(const HomeState.loading());
+    tester.usePhoneSurface();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: BlocProvider<HomeCubit>.value(
+          value: cubit,
+          child: HomeView(
+            onMovieTap: (_) {},
+            contentLanguage: ContentLanguage.de,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('DE'), findsOneWidget);
+    expect(find.byTooltip('Content language: Deutsch'), findsOneWidget);
+  });
 
   testWidgets('loading shows a progress indicator and message', (tester) async {
     when(() => cubit.state).thenReturn(const HomeState.loading());

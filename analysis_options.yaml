@@ -3,11 +3,10 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
-  # Generated code is validated by its generators, not by our lint rules.
+  # Generated files are *not* excluded: the analyzer must still see their
+  # compile errors. Their lints are silenced by `ignore_for_file: type=lint`
+  # headers, which the generators add (source_gen via build.yaml).
   exclude:
-    - "**/*.g.dart"
-    - "**/*.freezed.dart"
-    - "**/*.config.dart"
     - build/**
     - android/**
     - ios/**

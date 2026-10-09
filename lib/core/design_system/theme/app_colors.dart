@@ -10,12 +10,17 @@ import 'package:material_ui/material_ui.dart';
 final class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
     required this.favorite,
+    required this.onFavorite,
     required this.ratingStar,
     required this.badgeScrim,
   });
 
   /// Filled hearts and the "In favorites" button.
   final Color favorite;
+
+  /// Text and icons drawn on a [favorite] fill. White is too faint on the
+  /// lighter dark-theme red, so each theme picks a pair that passes WCAG AA.
+  final Color onFavorite;
 
   /// The star inside rating badges.
   final Color ratingStar;
@@ -25,20 +30,28 @@ final class AppColors extends ThemeExtension<AppColors> {
 
   static const light = AppColors(
     favorite: Color(0xFFD32F2F),
+    onFavorite: Color(0xFFFFFFFF),
     ratingStar: Color(0xFFFFB300),
     badgeScrim: Color(0x99000000),
   );
 
   static const dark = AppColors(
     favorite: Color(0xFFFF6B6B),
+    onFavorite: Color(0xFF410002),
     ratingStar: Color(0xFFFFCA28),
     badgeScrim: Color(0xB3000000),
   );
 
   @override
-  AppColors copyWith({Color? favorite, Color? ratingStar, Color? badgeScrim}) {
+  AppColors copyWith({
+    Color? favorite,
+    Color? onFavorite,
+    Color? ratingStar,
+    Color? badgeScrim,
+  }) {
     return AppColors(
       favorite: favorite ?? this.favorite,
+      onFavorite: onFavorite ?? this.onFavorite,
       ratingStar: ratingStar ?? this.ratingStar,
       badgeScrim: badgeScrim ?? this.badgeScrim,
     );
@@ -49,6 +62,7 @@ final class AppColors extends ThemeExtension<AppColors> {
     if (other is! AppColors) return this;
     return AppColors(
       favorite: Color.lerp(favorite, other.favorite, t)!,
+      onFavorite: Color.lerp(onFavorite, other.onFavorite, t)!,
       ratingStar: Color.lerp(ratingStar, other.ratingStar, t)!,
       badgeScrim: Color.lerp(badgeScrim, other.badgeScrim, t)!,
     );

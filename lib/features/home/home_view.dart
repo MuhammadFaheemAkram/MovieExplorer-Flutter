@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:movie_explorer/core/design_system/design_system.dart';
+import 'package:movie_explorer/domain/model/content_language.dart';
 import 'package:movie_explorer/domain/model/movie.dart';
 import 'package:movie_explorer/features/home/cubit/home_cubit.dart';
 import 'package:movie_explorer/features/home/cubit/home_state.dart';
@@ -11,14 +12,25 @@ import 'package:movie_explorer/features/home/widgets/movie_grid.dart';
 /// It holds no business logic and doesn't know about routes (the Page passes
 /// [onMovieTap]), so widget tests can drive it with a mocked Cubit.
 class HomeView extends StatelessWidget {
-  const HomeView({super.key, required this.onMovieTap});
+  const HomeView({
+    super.key,
+    required this.onMovieTap,
+    this.contentLanguage = ContentLanguage.en,
+  });
 
   final ValueChanged<Movie> onMovieTap;
+
+  /// Shown as a badge in the app bar. It proves an app-wide setting reaches a
+  /// screen instantly (see `SettingsCubit`).
+  final ContentLanguage contentLanguage;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Trending')),
+      appBar: AppBar(
+        title: const Text('Trending'),
+        actions: [_LanguageBadge(language: contentLanguage)],
+      ),
       body: BlocConsumer<HomeCubit, HomeState>(
         // One-time effect: report a failed refresh once, without replacing the
         // movies already on screen.
@@ -65,4 +77,40 @@ class HomeView extends StatelessWidget {
 
   static String? _refreshError(HomeState state) =>
       state is HomeLoaded ? state.refreshErrorMessage : null;
+}
+
+class _LanguageBadge extends StatelessWidget {
+  const _LanguageBadge({required this.language});
+
+  final ContentLanguage language;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSpacing.medium),
+      child: Tooltip(
+        message: 'Content language: ${language.displayName}',
+        child: DecoratedBox(
+          decoration: ShapeDecoration(
+            color: colors.secondaryContainer,
+            shape: const StadiumBorder(),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.small,
+              vertical: AppSpacing.xxSmall,
+            ),
+            child: Text(
+              language.code,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colors.onSecondaryContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

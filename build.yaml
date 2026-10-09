@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # Store DateTimes as ISO-8601 text (microsecond precision) instead of
+          # whole Unix seconds, so "newest favorite first" stays exact.
+          store_date_time_values_as_text: true

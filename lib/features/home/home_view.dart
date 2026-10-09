@@ -51,7 +51,11 @@ class HomeView extends StatelessWidget {
             ),
             HomeLoaded(:final movies) => RefreshIndicator(
               onRefresh: cubit.refresh,
-              child: MovieGrid(movies: movies, onMovieTap: onMovieTap),
+              child: MovieGrid(
+                movies: movies,
+                onMovieTap: onMovieTap,
+                onToggleFavorite: cubit.toggleFavorite,
+              ),
             ),
           };
         },

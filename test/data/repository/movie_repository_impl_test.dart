@@ -1,20 +1,28 @@
+import 'package:async/async.dart' show StreamQueue;
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:movie_explorer/core/common/app_exception.dart';
 import 'package:movie_explorer/core/common/result.dart';
+import 'package:movie_explorer/core/database/app_database.dart';
 import 'package:movie_explorer/data/repository/movie_repository_impl.dart';
 import 'package:movie_explorer/domain/model/movie.dart';
 
 import '../../helpers/fakes/stub_movie_api_service.dart';
 import '../../helpers/fixtures.dart';
+import '../../helpers/stream_helpers.dart';
 
 void main() {
   late StubMovieApiService api;
+  late AppDatabase database;
   late MovieRepositoryImpl repository;
 
   setUp(() {
     api = StubMovieApiService(movies: [nebulasEdgeDto, silentHarborDto]);
-    repository = MovieRepositoryImpl(api);
+    database = AppDatabase(NativeDatabase.memory());
+    repository = MovieRepositoryImpl(api, database.favoritesDao);
   });
+
+  tearDown(() => database.close());
 
   /// Unwraps an [Ok] or fails the test with the unexpected [Err].
   T okValue<T>(Result<T> result) => switch (result) {
@@ -28,7 +36,7 @@ void main() {
     Err(:final exception) => exception,
   };
 
-  group('MovieRepositoryImpl', () {
+  group('network', () {
     test('getTrendingMovies maps DTOs to domain movies', () async {
       final movies = okValue(await repository.getTrendingMovies());
 
@@ -74,11 +82,54 @@ void main() {
 
       expect(exception, isA<UnknownException>());
     });
+  });
 
-    test('favorites are empty until the drift store arrives', () async {
-      expect(await repository.watchFavoriteMovies().first, isEmpty);
-      expect(await repository.watchFavoriteIds().first, isEmpty);
-      expect(await repository.toggleFavorite(nebulasEdge), isA<Ok<void>>());
+  group('favorites', () {
+    test(
+      'toggleFavorite stores the movie; toggling again removes it',
+      () async {
+        final favorites = StreamQueue(repository.watchFavoriteMovies());
+        addTearDown(favorites.cancel);
+        expect(await nextEvent(favorites), isEmpty);
+
+        expect(await repository.toggleFavorite(nebulasEdge), isA<Ok<void>>());
+        expect(await nextEvent(favorites), [
+          nebulasEdge.copyWith(isFavorite: true),
+        ]);
+
+        await repository.toggleFavorite(nebulasEdge);
+        expect(await nextEvent(favorites), isEmpty);
+      },
+    );
+
+    test('watchFavoriteIds follows every toggle', () async {
+      final ids = StreamQueue(repository.watchFavoriteIds());
+      addTearDown(ids.cancel);
+      expect(await nextEvent(ids), isEmpty);
+
+      await repository.toggleFavorite(silentHarbor);
+      expect(await nextEvent(ids), {102});
+    });
+
+    test(
+      'details fall back to the stored favorite when the API fails',
+      () async {
+        await repository.toggleFavorite(nebulasEdge);
+        api.error = const NetworkException();
+
+        final movie = okValue(await repository.getMovieDetails(101));
+
+        expect(movie.title, "Nebula's Edge");
+        expect(movie.isFavorite, isTrue);
+      },
+    );
+
+    test('details stay an Err when the API fails for a non-favorite', () async {
+      api.error = const NetworkException();
+
+      final exception = errException(await repository.getMovieDetails(101));
+
+      expect(exception, isA<NetworkException>());
     });
   });
 }

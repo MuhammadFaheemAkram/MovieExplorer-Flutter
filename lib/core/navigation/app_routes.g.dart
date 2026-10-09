@@ -101,7 +101,10 @@ mixin $HomeRoute on GoRouteData {
 
 mixin $HomeMovieDetailsRoute on GoRouteData {
   static HomeMovieDetailsRoute _fromState(GoRouterState state) =>
-      HomeMovieDetailsRoute(id: int.parse(state.pathParameters['id']!));
+      HomeMovieDetailsRoute(
+        id: int.parse(state.pathParameters['id']!),
+        $extra: state.extra as Movie?,
+      );
 
   HomeMovieDetailsRoute get _self => this as HomeMovieDetailsRoute;
 
@@ -111,17 +114,19 @@ mixin $HomeMovieDetailsRoute on GoRouteData {
   );
 
   @override
-  void go(BuildContext context) => context.go(location);
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
 
   @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
 
   @override
   void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
+      context.pushReplacement(location, extra: _self.$extra);
 
   @override
-  void replace(BuildContext context) => context.replace(location);
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
 }
 
 mixin $SearchRoute on GoRouteData {
@@ -146,7 +151,10 @@ mixin $SearchRoute on GoRouteData {
 
 mixin $SearchMovieDetailsRoute on GoRouteData {
   static SearchMovieDetailsRoute _fromState(GoRouterState state) =>
-      SearchMovieDetailsRoute(id: int.parse(state.pathParameters['id']!));
+      SearchMovieDetailsRoute(
+        id: int.parse(state.pathParameters['id']!),
+        $extra: state.extra as Movie?,
+      );
 
   SearchMovieDetailsRoute get _self => this as SearchMovieDetailsRoute;
 
@@ -156,17 +164,19 @@ mixin $SearchMovieDetailsRoute on GoRouteData {
   );
 
   @override
-  void go(BuildContext context) => context.go(location);
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
 
   @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
 
   @override
   void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
+      context.pushReplacement(location, extra: _self.$extra);
 
   @override
-  void replace(BuildContext context) => context.replace(location);
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
 }
 
 mixin $FavoritesRoute on GoRouteData {
@@ -192,7 +202,10 @@ mixin $FavoritesRoute on GoRouteData {
 
 mixin $FavoritesMovieDetailsRoute on GoRouteData {
   static FavoritesMovieDetailsRoute _fromState(GoRouterState state) =>
-      FavoritesMovieDetailsRoute(id: int.parse(state.pathParameters['id']!));
+      FavoritesMovieDetailsRoute(
+        id: int.parse(state.pathParameters['id']!),
+        $extra: state.extra as Movie?,
+      );
 
   FavoritesMovieDetailsRoute get _self => this as FavoritesMovieDetailsRoute;
 
@@ -202,17 +215,19 @@ mixin $FavoritesMovieDetailsRoute on GoRouteData {
   );
 
   @override
-  void go(BuildContext context) => context.go(location);
+  void go(BuildContext context) => context.go(location, extra: _self.$extra);
 
   @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+  Future<T?> push<T>(BuildContext context) =>
+      context.push<T>(location, extra: _self.$extra);
 
   @override
   void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
+      context.pushReplacement(location, extra: _self.$extra);
 
   @override
-  void replace(BuildContext context) => context.replace(location);
+  void replace(BuildContext context) =>
+      context.replace(location, extra: _self.$extra);
 }
 
 mixin $SettingsRoute on GoRouteData {

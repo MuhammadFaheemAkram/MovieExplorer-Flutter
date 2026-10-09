@@ -33,25 +33,67 @@ void main() {
     });
   });
 
+  group('FavoriteButton', () {
+    testWidgets('describes the action it will perform', (tester) async {
+      await tester.pumpThemed(
+        FavoriteButton(isFavorite: false, onPressed: () {}),
+      );
+      expect(find.byTooltip('Add to favorites'), findsOneWidget);
+      expect(find.byIcon(Icons.favorite_border), findsOneWidget);
+
+      await tester.pumpThemed(
+        FavoriteButton(isFavorite: true, onPressed: () {}),
+      );
+      expect(find.byTooltip('Remove from favorites'), findsOneWidget);
+      expect(find.byIcon(Icons.favorite), findsOneWidget);
+    });
+
+    testWidgets('reports taps', (tester) async {
+      var taps = 0;
+      await tester.pumpThemed(
+        FavoriteButton(isFavorite: false, onPressed: () => taps++),
+      );
+
+      await tester.tap(find.byType(FavoriteButton));
+
+      expect(taps, 1);
+    });
+  });
+
   group('MovieCard', () {
+    Widget card({VoidCallback? onTap, VoidCallback? onToggleFavorite}) =>
+        SizedBox(
+          width: 180,
+          height: 330,
+          child: MovieCard(
+            movie: nebulasEdge,
+            onTap: onTap,
+            onToggleFavorite: onToggleFavorite,
+          ),
+        );
+
     testWidgets('shows title, year and rating, and reports taps', (
       tester,
     ) async {
       var taps = 0;
-      await tester.pumpThemed(
-        SizedBox(
-          width: 180,
-          height: 330,
-          child: MovieCard(movie: nebulasEdge, onTap: () => taps++),
-        ),
-      );
+      await tester.pumpThemed(card(onTap: () => taps++));
 
       expect(find.text("Nebula's Edge"), findsOneWidget);
       expect(find.text('2023'), findsOneWidget);
       expect(find.text('8.2'), findsOneWidget);
 
-      await tester.tap(find.byType(MovieCard));
+      await tester.tap(find.text("Nebula's Edge"));
       expect(taps, 1);
+    });
+
+    testWidgets('shows the heart only when it can be toggled', (tester) async {
+      await tester.pumpThemed(card());
+      expect(find.byType(FavoriteButton), findsNothing);
+
+      var toggles = 0;
+      await tester.pumpThemed(card(onToggleFavorite: () => toggles++));
+      await tester.tap(find.byType(FavoriteButton));
+      expect(toggles, 1);
     });
 
     testWidgets('does not overflow at a large text scale', (tester) async {
@@ -61,17 +103,44 @@ void main() {
           home: MediaQuery(
             data: const MediaQueryData(textScaler: TextScaler.linear(2)),
             child: Scaffold(
-              body: SizedBox(
-                width: 180,
-                height: 330,
-                child: MovieCard(movie: nebulasEdge, onTap: () {}),
-              ),
+              body: card(onTap: () {}, onToggleFavorite: () {}),
             ),
           ),
         ),
       );
 
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('MovieRow', () {
+    testWidgets('shows title, year, rating and the trailing widget', (
+      tester,
+    ) async {
+      var taps = 0;
+      await tester.pumpThemed(
+        MovieRow(
+          movie: silentHarbor,
+          onTap: () => taps++,
+          trailing: const Icon(Icons.chevron_right),
+        ),
+      );
+
+      expect(find.text('The Silent Harbor'), findsOneWidget);
+      expect(find.text('2022'), findsOneWidget);
+      expect(find.text('7.6'), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+
+      await tester.tap(find.text('The Silent Harbor'));
+      expect(taps, 1);
+    });
+  });
+
+  group('GenreChip', () {
+    testWidgets('shows its label', (tester) async {
+      await tester.pumpThemed(const GenreChip(label: 'Drama'));
+
+      expect(find.widgetWithText(Chip, 'Drama'), findsOneWidget);
     });
   });
 }

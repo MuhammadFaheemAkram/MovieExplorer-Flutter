@@ -18,8 +18,10 @@ class HomePage extends StatelessWidget {
     return BlocProvider(
       create: (_) => getIt<HomeCubit>()..load(),
       child: HomeView(
-        onMovieTap: (movie) =>
-            HomeMovieDetailsRoute(id: movie.id).push<void>(context),
+        onMovieTap: (movie) => HomeMovieDetailsRoute(
+          id: movie.id,
+          $extra: movie,
+        ).push<void>(context),
       ),
     );
   }

@@ -10,12 +10,17 @@ import '../../helpers/pump_app.dart';
 import '../../helpers/test_dependencies.dart';
 
 void main() {
-  setUp(
-    () => registerTestDependencies(
-      movieRepository: FakeMovieRepository(movies: testMovies),
-    ),
-  );
-  tearDown(getIt.reset);
+  late FakeMovieRepository repository;
+
+  setUp(() {
+    repository = FakeMovieRepository(movies: testMovies);
+    registerTestDependencies(movieRepository: repository);
+  });
+
+  tearDown(() async {
+    await getIt.reset();
+    await repository.dispose();
+  });
 
   Future<void> pumpMovieExplorer(WidgetTester tester) async {
     tester.usePhoneSurface();
@@ -35,7 +40,7 @@ void main() {
   }
 
   Future<void> openFirstMovie(WidgetTester tester) async {
-    await tester.tap(find.byType(MovieCard).first);
+    await tester.tap(find.text("Nebula's Edge"));
     await tester.pumpAndSettle();
   }
 
@@ -81,7 +86,8 @@ void main() {
       await pumpMovieExplorer(tester);
 
       await openFirstMovie(tester);
-      expect(find.text('Movie #101'), findsOneWidget);
+      expect(find.text('Overview'), findsOneWidget);
+      expect(find.text(nebulasEdge.overview), findsOneWidget);
       // The shell's tab bar stays visible above pushed screens.
       expect(find.byType(NavigationBar), findsOneWidget);
 
@@ -98,11 +104,11 @@ void main() {
 
       await tapDestination(tester, 'Search');
       // Home's stack is kept alive offstage, so it isn't visible here...
-      expect(find.text('Movie #101'), findsNothing);
+      expect(find.text('Overview'), findsNothing);
 
       await tapDestination(tester, 'Home');
       // ...and it is still on top of the stack when we come back.
-      expect(find.text('Movie #101'), findsOneWidget);
+      expect(find.text('Overview'), findsOneWidget);
     });
 
     testWidgets('re-tapping the active tab pops it back to its root', (
@@ -113,8 +119,46 @@ void main() {
 
       await tapDestination(tester, 'Home');
 
-      expect(find.text('Movie #101'), findsNothing);
+      expect(find.text('Overview'), findsNothing);
       expect(find.widgetWithText(AppBar, 'Trending'), findsOneWidget);
+    });
+  });
+
+  group('Favorites across tabs (single source of truth)', () {
+    testWidgets('a movie favorited on Home appears in Favorites, and removing '
+        'it there clears the heart on Home', (tester) async {
+      await pumpMovieExplorer(tester);
+
+      await tester.tap(find.byTooltip('Add to favorites').first);
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Remove from favorites'), findsOneWidget);
+
+      await tapDestination(tester, 'Favorites');
+      expect(find.byType(MovieRow), findsOneWidget);
+      expect(find.text("Nebula's Edge"), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Remove from favorites'));
+      await tester.pumpAndSettle();
+      expect(find.text('No favorites yet'), findsOneWidget);
+
+      await tapDestination(tester, 'Home');
+      expect(find.byTooltip('Remove from favorites'), findsNothing);
+      expect(find.byTooltip('Add to favorites'), findsNWidgets(2));
+    });
+
+    testWidgets('the Details heart and the Home heart stay in sync', (
+      tester,
+    ) async {
+      await pumpMovieExplorer(tester);
+      await openFirstMovie(tester);
+
+      await tester.tap(find.text('Add to favorites'));
+      await tester.pumpAndSettle();
+      expect(find.text('In favorites'), findsOneWidget);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Remove from favorites'), findsOneWidget);
     });
   });
 }

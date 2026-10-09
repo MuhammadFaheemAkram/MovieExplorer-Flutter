@@ -26,8 +26,8 @@ MovieExplorer is built in **strict, reviewable phases**. Each phase ends with a 
 |------:|-------|:------:|
 | 1 | Foundation: FVM project, design system base, typed navigation (4-tab shell), DI root | ✅ Done |
 | 2 | Models + fake API + repository + Home (trending) | ✅ Done |
-| 3 | drift favorites + movie details | ⏳ Next |
-| 4 | Search + settings + tests + polish | 🔜 Planned |
+| 3 | drift favorites + movie details | ✅ Done |
+| 4 | Search + settings + tests + polish | ⏳ Next |
 
 ---
 
@@ -77,7 +77,7 @@ lib/
 └── di/         → composition root (get_it + injectable)
 ```
 
-**Data flow** (live for Home since Phase 2; drift joins in Phase 3):
+**Data flow** (live since Phases 2–3; Search and Settings join in Phase 4):
 
 ```
 View ──intent──▶ Cubit / Bloc ──▶ UseCase ──▶ MovieRepository ──▶ FakeMovieApiService (bundled JSON)
@@ -109,6 +109,7 @@ Key rules:
 MovieExplorer/
 ├── .fvmrc                              # pinned Flutter version (3.47.6)
 ├── analysis_options.yaml               # lints + strict analyzer modes
+├── build.yaml                          # drift option: DateTimes as ISO-8601 text
 ├── assets/json/trending_movies.json    # fake-API catalog (same file as the iOS edition)
 ├── lib/
 │   ├── main.dart                       # binding → configureDependencies() → runApp
@@ -118,17 +119,20 @@ MovieExplorer/
 │   │   ├── design_system/              # theme/ (AppTheme, AppColors, tokens) + widgets/
 │   │   ├── navigation/                 # app_routes.dart (+ .g.dart), app_router.dart, app_shell.dart
 │   │   ├── network/                    # MovieApiService, FakeMovieApiService, AssetJsonLoader, dto/
-│   │   ├── database/  storage/         # Phases 3–4
+│   │   ├── database/                   # AppDatabase, FavoriteMovies table, FavoritesDao, converters/
+│   │   ├── storage/                    # Phase 4
 │   ├── data/
-│   │   ├── mapper/                     # MovieDto → Movie
+│   │   ├── mapper/                     # MovieDto → Movie, FavoriteMovieRow ↔ Movie
 │   │   └── repository/                 # MovieRepositoryImpl
 │   ├── domain/
-│   │   ├── model/                      # Movie (freezed)
+│   │   ├── model/                      # Movie (freezed), favorite-overlay helpers
 │   │   ├── repository/                 # MovieRepository (contract)
-│   │   └── usecase/                    # GetTrendingMovies, SearchMovies, GetMovieDetails
+│   │   └── usecase/                    # trending, search, details, watch/toggle favorites
 │   ├── features/
 │   │   ├── home/                       # home_page.dart, home_view.dart, cubit/, widgets/
-│   │   └── search/ favorites/ details/ settings/   # placeholders until Phases 3–4
+│   │   ├── favorites/                  # favorites_page.dart, favorites_view.dart, cubit/
+│   │   ├── details/                    # movie_details_page.dart, movie_details_view.dart, cubit/
+│   │   └── search/ settings/           # placeholders until Phase 4
 │   └── di/                             # injection.dart (+ .config.dart), app_module.dart
 └── test/                               # mirrors lib/, plus helpers/ (fixtures, fakes, pump helpers)
 ```
@@ -170,6 +174,28 @@ There is no backend. `FakeMovieApiService` implements the same `MovieApiService`
 
 ---
 
+## 💾 How Local Persistence Works
+
+Favorites live in a [drift](https://drift.simonbinder.eu) SQLite database, which is **the single source of truth** for what is favorited.
+
+- **Storage**
+  - The `FavoriteMovies` table stores the *whole* movie, so Favorites and Details work fully offline.
+  - Genres go through a JSON `TypeConverter`.
+  - `addedAt` is stored as UTC ISO-8601 text (see `build.yaml`), so "newest first" is exact.
+- **`FavoritesDao`** exposes `watchAll()` and `watchIds()`. These are drift `watch()` queries: they re-emit whenever the table changes. Its `toggle()` runs inside a transaction.
+- **Hearts**
+  - Screens never store favorite flags. Home and Details overlay `isFavorite` from the one `watchFavoriteIds()` stream.
+  - So a heart tapped on Home, in Details or in Favorites updates everywhere at once.
+- **Removing from Favorites** is optimistic: the row disappears immediately and the store confirms it. A swiped `Dismissible` must never be rebuilt into the list, and the update is rolled back if the write fails.
+- **Details offline:** if the API fails but the movie is a favorite, the stored copy is shown.
+
+> **drift ↔ Room ↔ SwiftData.**
+> - **Concepts:** the table class, DAO and `watch()` stream map to Room's `@Entity`, `@Dao` and `Flow` on Android, and to SwiftData's `@Model` plus an observing store on iOS.
+> - **Platform:** drift is plain SQLite on both platforms.
+> - **Schema:** drift checks its schema at compile time through code generation.
+
+---
+
 ## ✅ Testing
 
 ```bash
@@ -177,14 +203,22 @@ fvm flutter analyze
 fvm flutter test
 ```
 
-**70 tests** after Phase 2:
-- **Fake API:** runs against the real bundled JSON. Covers search by title and genre, not-found ids, simulated errors, and malformed catalogs.
-- **Data layer:** DTO decoding (snake_case, checked errors), mappers, and the repository's error mapping.
-- **Use cases:** trending, search (blank queries skip the repository), details.
-- **`HomeCubit`** (`bloc_test`): load, empty, error, and refresh keeping content, plus no emits after close.
-- **`HomeView`** (widget tests with a `MockCubit`): every state, taps, pull-to-refresh, the refresh-failure SnackBar.
-- **Navigation:** tabs, per-tab back stacks, back, re-tap to pop. Fakes are registered in `getIt` for these.
-- **Design system:** theme, `AppColors`, `MovieCard`, `RatingBadge`, `PosterImage`, the state widgets, and large-text overflow.
+**121 tests** after Phase 3:
+- **drift** (in-memory SQLite):
+  - the DAO toggle;
+  - newest-first ordering, including within the same second;
+  - live `watch()` streams;
+  - converter round-trips.
+- **Repository:** DTO mapping, error mapping, favorites streams, and the offline Details fallback.
+- **Fake API:** runs against the real bundled JSON (search by title and genre, not-found ids, simulated and malformed data).
+- **Use cases:** trending, search, details, and the favorite use cases. **Domain:** the favorite-overlay helpers.
+- **Cubits** (`bloc_test`):
+  - **Home:** load/refresh and live hearts;
+  - **Favorites:** optimistic removal plus rollback;
+  - **Details:** preview vs deep link, quiet refresh, live heart.
+- **Views** (widget tests with `MockCubit`): every state, taps, hearts, pull-to-refresh, and swipe-to-remove.
+- **App:** tabs, per-tab back stacks, and **favorites staying in sync across Home, Details and Favorites**. Fakes are registered in `getIt` for these.
+- **Design system:** theme, `AppColors`, cards, rows, hearts, chips, badges, posters, and large-text overflow.
 
 ---
 
@@ -212,12 +246,12 @@ fvm flutter test
 
 - [Phase 1 — Foundation](docs/PHASE_1_SUMMARY.md)
 - [Phase 2 — Models + Fake API + Repository + Home](docs/PHASE_2_SUMMARY.md)
+- [Phase 3 — drift Favorites + Details](docs/PHASE_3_SUMMARY.md)
 
 ---
 
 ## 🗺️ Roadmap
 
-- **Phase 3:** drift favorites (DAO, streams, transactions), the Details screen, live hearts everywhere.
 - **Phase 4:**
   - `SearchBloc` with debounce + restartable transformers;
   - Settings (`SharedPreferencesWithCache`, app-wide theme);

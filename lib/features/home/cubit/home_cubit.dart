@@ -1,21 +1,39 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:movie_explorer/core/common/result.dart';
 import 'package:movie_explorer/domain/model/movie.dart';
+import 'package:movie_explorer/domain/model/movie_favorites.dart';
 import 'package:movie_explorer/domain/usecase/get_trending_movies_use_case.dart';
+import 'package:movie_explorer/domain/usecase/toggle_favorite_use_case.dart';
+import 'package:movie_explorer/domain/usecase/watch_favorite_ids_use_case.dart';
 import 'package:movie_explorer/features/home/cubit/home_state.dart';
 
 /// Drives the Home screen.
 ///
 /// This is a Cubit, not a Bloc: Home only has plain intents (`load`,
-/// `refresh`) and no need for event-stream operators such as debouncing.
-/// State is immutable and replaced on every change. The View renders it and
-/// calls these methods; it never touches the repository.
+/// `refresh`, `toggleFavorite`) and no need for event-stream operators such as
+/// debouncing. State is immutable and replaced on every change. The View
+/// renders it and calls these methods; it never touches the repository.
+///
+/// Hearts come from the favorites store, never from the network. The Cubit
+/// keeps the latest favorite ids and overlays them onto the movies on screen,
+/// so a heart changes the moment drift does, whichever tab changed it.
 @injectable
 class HomeCubit extends Cubit<HomeState> {
-  HomeCubit(this._getTrendingMovies) : super(const HomeState.loading());
+  HomeCubit(
+    this._getTrendingMovies,
+    WatchFavoriteIdsUseCase watchFavoriteIds,
+    this._toggleFavorite,
+  ) : super(const HomeState.loading()) {
+    _favoriteIdsSubscription = watchFavoriteIds().listen(_onFavoriteIds);
+  }
 
   final GetTrendingMoviesUseCase _getTrendingMovies;
+  final ToggleFavoriteUseCase _toggleFavorite;
+  late final StreamSubscription<Set<int>> _favoriteIdsSubscription;
+  Set<int> _favoriteIds = const {};
 
   /// First load, and "Try again". Shows the full-screen loading state.
   Future<void> load() async {
@@ -55,7 +73,28 @@ class HomeCubit extends Cubit<HomeState> {
     }
   }
 
+  /// Adds or removes [movie] from favorites. There's no local state to update:
+  /// the store emits new favorite ids, and [_onFavoriteIds] redraws the hearts.
+  Future<void> toggleFavorite(Movie movie) => _toggleFavorite(movie);
+
+  void _onFavoriteIds(Set<int> ids) {
+    _favoriteIds = ids;
+    final current = state;
+    if (current is HomeLoaded) {
+      final updated = current.copyWith(
+        movies: current.movies.withFavoritesFrom(ids),
+      );
+      if (updated != current) emit(updated);
+    }
+  }
+
   HomeState _contentState(List<Movie> movies) => movies.isEmpty
       ? const HomeState.empty()
-      : HomeState.loaded(movies: movies);
+      : HomeState.loaded(movies: movies.withFavoritesFrom(_favoriteIds));
+
+  @override
+  Future<void> close() async {
+    await _favoriteIdsSubscription.cancel();
+    return super.close();
+  }
 }

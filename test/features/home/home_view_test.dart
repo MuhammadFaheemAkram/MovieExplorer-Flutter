@@ -17,10 +17,13 @@ class MockHomeCubit extends MockCubit<HomeState> implements HomeCubit {}
 void main() {
   late MockHomeCubit cubit;
 
+  setUpAll(() => registerFallbackValue(nebulasEdge));
+
   setUp(() {
     cubit = MockHomeCubit();
     when(() => cubit.load()).thenAnswer((_) async {});
     when(() => cubit.refresh()).thenAnswer((_) async {});
+    when(() => cubit.toggleFavorite(any())).thenAnswer((_) async {});
   });
 
   Future<void> pumpView(
@@ -61,6 +64,26 @@ void main() {
     expect(find.byType(MovieCard), findsNWidgets(2));
     expect(find.text("Nebula's Edge"), findsOneWidget);
     expect(tapped, [silentHarbor]);
+  });
+
+  testWidgets('tapping a heart toggles that movie', (tester) async {
+    when(() => cubit.state)
+        .thenReturn(const HomeState.loaded(movies: testMovies));
+
+    await pumpView(tester);
+    await tester.tap(find.byTooltip('Add to favorites').last);
+
+    verify(() => cubit.toggleFavorite(silentHarbor)).called(1);
+  });
+
+  testWidgets('a favorite shows a filled heart', (tester) async {
+    when(() => cubit.state).thenReturn(
+      HomeState.loaded(movies: [nebulasEdge.copyWith(isFavorite: true)]),
+    );
+
+    await pumpView(tester);
+
+    expect(find.byTooltip('Remove from favorites'), findsOneWidget);
   });
 
   testWidgets('error shows the message and "Try again" reloads', (

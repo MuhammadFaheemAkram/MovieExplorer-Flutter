@@ -2,12 +2,18 @@ import 'package:material_ui/material_ui.dart';
 import 'package:movie_explorer/core/design_system/design_system.dart';
 import 'package:movie_explorer/domain/model/movie.dart';
 
-/// Two-column grid of [MovieCard]s.
+/// Two-column grid of [MovieCard]s with favorite hearts.
 class MovieGrid extends StatelessWidget {
-  const MovieGrid({super.key, required this.movies, required this.onMovieTap});
+  const MovieGrid({
+    super.key,
+    required this.movies,
+    required this.onMovieTap,
+    required this.onToggleFavorite,
+  });
 
   final List<Movie> movies;
   final ValueChanged<Movie> onMovieTap;
+  final ValueChanged<Movie> onToggleFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +32,12 @@ class MovieGrid extends StatelessWidget {
       itemCount: movies.length,
       itemBuilder: (context, index) {
         final movie = movies[index];
-        return MovieCard(movie: movie, onTap: () => onMovieTap(movie));
+        return MovieCard(
+          movie: movie,
+          heroTag: HeroTags.poster(movie.id),
+          onTap: () => onMovieTap(movie),
+          onToggleFavorite: () => onToggleFavorite(movie),
+        );
       },
     );
   }

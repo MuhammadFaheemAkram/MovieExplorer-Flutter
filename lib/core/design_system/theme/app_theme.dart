@@ -34,6 +34,7 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.all(Radius.circular(AppRadius.medium)),
         ),
       ),
+      chipTheme: const ChipThemeData(shape: StadiumBorder()),
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
       ),
